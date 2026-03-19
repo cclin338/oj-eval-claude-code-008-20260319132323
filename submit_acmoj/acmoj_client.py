@@ -41,22 +41,22 @@ class ACMOJClient:
         
 
     def _make_request(self, method: str, endpoint: str, data: Dict[str, Any] = None,
-                     params: Dict[str, Any] = None) -> Optional[Dict]:
+                     params: Dict[str, Any] = None, use_json: bool = False) -> Optional[Dict]:
         url = f"{self.api_base}{endpoint}"
-        print(f"DEBUG: Making {method} request to {url}")
-        print(f"DEBUG: Headers: {self.headers}")
-        print(f"DEBUG: Data: {data}")
+        headers = self.headers.copy()
+        if use_json:
+            headers['Content-Type'] = 'application/json'
         try:
             if method.upper() == "GET":
-                response = requests.get(url, headers=self.headers, params=params, timeout=10)
+                response = requests.get(url, headers=headers, params=params, timeout=10)
             elif method.upper() == "POST":
-                response = requests.post(url, headers=self.headers, data=data, timeout=10)
+                if use_json:
+                    response = requests.post(url, headers=headers, json=data, timeout=10)
+                else:
+                    response = requests.post(url, headers=headers, data=data, timeout=10)
             else:
                 print(f"Unsupported HTTP method: {method}")
                 return None
-
-            print(f"DEBUG: Response status: {response.status_code}")
-            print(f"DEBUG: Response text: {response.text}")
 
             if response.status_code == 204:
                 return {"status": "success", "message": "Operation successful"}
@@ -70,8 +70,6 @@ class ACMOJClient:
 
         except requests.exceptions.RequestException as e:
             print(f"API Request failed: {e}")
-            if 'response' in locals() and response:
-                print(f"Response text: {response.text}")
             return None
 
     def _save_submission_id(self, submission_id):
@@ -91,7 +89,7 @@ class ACMOJClient:
 
     def submit_git(self, problem_id: int, git_url: str) -> Optional[Dict]:
         data = {"language": "git", "code": git_url}
-        result = self._make_request("POST", f"/problem/{problem_id}/submit", data=data)
+        result = self._make_request("POST", f"/problem/{problem_id}/submit", data=data, use_json=True)
         if result and 'id' in result:
             self._save_submission_id(result['id'])
 
@@ -127,6 +125,11 @@ def main():
     submit_parser.add_argument("--code-file", type=str, required=True,
                                help="Path to the source code file")
 
+    # Submit git repository
+    git_parser = subparsers.add_parser("submit-git", help="Submit via git repository")
+    git_parser.add_argument("--problem-id", type=int, required=True, help="Problem ID")
+    git_parser.add_argument("--git-url", type=str, required=True, help="Git repository URL")
+
     # Sub-command for checking submission status
     status_parser = subparsers.add_parser("status", help="Check submission status")
     status_parser.add_argument("--submission-id", type=int, required=True, help="Submission ID")
@@ -155,6 +158,9 @@ def main():
             exit(1)
 
         result = client.submit_code(args.problem_id, args.language, code_text)
+
+    elif args.command == "submit-git":
+        result = client.submit_git(args.problem_id, args.git_url)
 
     elif args.command == "status":
         result = client.get_submission_detail(args.submission_id)
