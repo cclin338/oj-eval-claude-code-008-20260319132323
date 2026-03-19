@@ -1,0 +1,35 @@
+# i++ solution
+# Read a digit character ('0'-'9') and output its increment (with wraparound)
+
+# Read the input character
+A<I
+
+# Convert from ASCII to numeric value by subtracting '0'
+# But we can't do arithmetic! So we need a lookup table
+
+# Create a lookup table at location 48-58 (ASCII codes for '0'-'9')
+# Location 48 will contain 49 ('1')
+# Location 49 will contain 50 ('2')
+# ...
+# Location 57 will contain 48 ('0' - wraparound)
+
+[48]<49
+[49]<50
+[50]<51
+[51]<52
+[52]<53
+[53]<54
+[54]<55
+[55]<56
+[56]<57
+[57]<48
+
+# Now we can use the input character as an index
+# A contains the ASCII value of the input digit
+# We look up location [A] to get the incremented value
+
+# Output the result
+O<[A]
+
+# Halt
+Z<1
