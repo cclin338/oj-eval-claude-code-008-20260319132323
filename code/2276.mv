@@ -1,0 +1,31 @@
+# Hello World solution
+# Output: "Hello World!"
+
+# Load ASCII values into registers and output them
+A<72
+O<A
+A<101
+O<A
+A<108
+O<A
+A<108
+O<A
+A<111
+O<A
+A<32
+O<A
+A<87
+O<A
+A<111
+O<A
+A<114
+O<A
+A<108
+O<A
+A<100
+O<A
+A<33
+O<A
+
+# Halt the program
+Z<1
